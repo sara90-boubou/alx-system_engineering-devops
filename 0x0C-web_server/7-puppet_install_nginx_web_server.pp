@@ -1,25 +1,24 @@
-# File:   7-puppet_install_nginx_web_server.pp
-# Author: Alex Orland Arévalo Tribaldos
-# email:  <3915@holbertonschool.com>
+# Script to install nginx using puppet
 
-# Using Puppet| Install Nginx server, setup and configuration
-
-package { 'nginx':
-  ensure => 'installed'
-}
-
-file { '/var/www/html/index.html':
-  content => 'Hello World',
-}
-
-file_line { 'redirection-301':
+package {'nginx':
   ensure => 'present',
-  path   => '/etc/nginx/sites-available/default',
-  after  => 'listen 80 default_server;',
-  line   => 'rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;',
 }
 
-service { 'nginx':
-  ensure  => running,
-  require => Package['nginx'],
+exec {'install':
+  command  => 'sudo apt-get update ; sudo apt-get -y install nginx',
+  provider => shell,
+}
+
+exec {'Hello World!':
+  command  => 'echo "Hello World!" | sudo dd status=none of=/var/www/html/index.html',
+  provider => shell,
+}
+
+exec {'sudo sed -i "s/listen 80 default_server;/listen 80 default_server;\\n\\tlocation \/redirect_me {\\n\\t\\treturn 301 https:\/\/www.youtube.com\/;\\n\\t}/" /etc/nginx/sites-available/default':
+  provider => shell,
+}
+
+exec {'run':
+  command  => 'sudo service nginx restart',
+  provider => shell,
 }
