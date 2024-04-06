@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Function to display subdomain information
+display_info() {
+  local domain="$1"
+  local subdomain="$2"
+
+  record_type=$(dig +short -t A "$subdomain.$domain" | head -n 1)
+  if [[ -n "$record_type" ]]; then
+    destination=$(dig +short -t A "$subdomain.$domain" | head -n 1)
+    echo "The subdomain $subdomain is an A record and points to $destination"
+  else
+    echo "Subdomain $subdomain not found for domain $domain"
+  fi
+}
+
+# Get domain and subdomain arguments
+domain="$1"
+subdomain="$2"
+
+# Check if only domain is provided
+if [[ -z "$subdomain" ]]; then
+  # Display information for specific subdomains
+  display_info "$domain" "www"
+  display_info "$domain" "lb-01"
+  display_info "$domain" "web-01"
+  display_info "$domain" "web-02"
+else
+  # Display information for provided subdomain
+  display_info "$domain" "$subdomain"
+fi
+
+# Ignore shellcheck SC2086 warning
+shopt -s ignore_shopt_unset
