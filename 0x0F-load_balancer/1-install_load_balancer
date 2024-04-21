@@ -1,18 +1,47 @@
-#!/usr/bin/env bash
-# Installs and configures HAproxy-2.0
-sudo apt-get install -y --no-install-recommends software-properties-common
-sudo add-apt-repository -y ppa:vbernat/haproxy-2.0
-sudo apt -y install haproxy
+equests using a round-robin algorithm
 
-FILE="/etc/haproxy/haproxy.cfg"
+sudo apt-get install -y haproxy
 
-server_1="34.231.20.126"
-server_2="18.205.26.139"
+echo "ENABLE=1" >> /etc/default/haproxy
+mv /etc/haproxy/haproxy.cfg{,.original}
+touch /etc/haproxy/haproxy.cfg
 
-FRONTEND="\nfrontend scorprogfront\n\tbind *:80\n\tdefault_backend scorprogservers\n"
-BACKEND="\nbackend scorprogservers\n\tbalance roundrobin\n\tserver server_1 $server_1\n\tserver server_2 $server_2\n"
+printf %s "global
+    log 127.0.0.1 local0 notice
+    maxconn 2000
+    user haproxy
+    group haproxy
 
-echo -e "$FRONTEND" | sudo tee -a "$FILE" 
-echo -e "$BACKEND" | sudo tee -a "$FILE"
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    retries 3
+    option  redispatch
+    timeout connect 5000
+    timeout client  30000
+    timeout server  30000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+frontend http-in
+    timeout client 30000
+    bind 0:80
+    default_backend servers
+
+backend servers
+    timeout connect 3000
+    timeout server 30000
+    balance roundrobin
+    server 228560-web-01 34.229.68.162:80 check
+    server 228560-web-02 107.23.22.152:80 check
+" >> /etc/haproxy/haproxy.cfg
 
 sudo service haproxy restart
+
